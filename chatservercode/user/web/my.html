@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to right, #beb4ca, #b4c0d5);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #444;
+        }
+        
+        #form-section {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+            width: 320px;
+            text-align: center;
+        }
+        
+        #form-section h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        #user-info-form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        #user-info-form label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left;
+            font-size: 15px;
+            color: initial;
+
+        }
+        
+        #user-info-form input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        
+        #user-info-form button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+        
+        #user-info-form button:hover {
+            background-color: #0056b3;
+        }
+
+        #email-transcript-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 15px;
+        }
+
+        #email-transcript {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .email-transcript-label {
+            margin-top: 2px;
+            font-weight: normal;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="form-section">
+    <h2>Enter Your Information</h2>
+    <form id="user-info-form" onsubmit="submitForm(event)">
+        <label for="firstname">First Name</label>
+        <input type="text" id="firstname" name="firstname" required>
+
+        <label for="lastname">Last Name</label>
+        <input type="text" id="lastname" name="lastname" required>
+
+        <label for="email">Email</label>
+        <input type="text" id="email" name="email" required>
+
+        <label for="phone">Phone Number</label>
+        <input type="text" id="phone" name="phone" required>
+
+        <div id="email-transcript-container">
+            <input type="checkbox" id="email-transcript" name="email-transcript">
+            <label for="email-transcript" class="email-transcript-label">Email the chat transcript to me</label>
+        </div>
+
+        <button type="submit">Chat Now</button>
+    </form>
+</div>
+
+<script>
+
+
+
+    function getQueryParams() {
+        const params = {};
+        const queryString = window.location.search.substring(1);
+        const regex = /([^&=]+)=([^&]*)/g;
+        let m;
+        while (m = regex.exec(queryString)) {
+            params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+        }
+        return params;
+    }
+
+
+
+
+    function generateSessionId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function submitForm(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        // Get form data
+        var phone = document.getElementById("phone").value;
+        var email = document.getElementById("email").value; 
+        var firstname = document.getElementById("firstname").value; 
+        var lastname = document.getElementById("lastname").value; 
+        var emailtranscript = document.getElementById("email-transcript").checked ? true : false;
+
+
+        //queues and skills from url
+        const params = getQueryParams();
+        const queues = params.queues ? params.queues : 'technicalsupportqueue@1';
+        const skills = params.skills ? params.skills : 'networking_skill';
+        console.log('Queue parameter:', queues); // Debugging line to check queue parameter
+        console.log('skill parameter:', skills);
+
+
+
+
+
+
+
+
+
+
+
+        
+        var sessionId = generateSessionId();
+
+        // Here you can send the form data to the server or do any processing if needed
+        
+        // Redirect to new page
+        var url = "custom.html?firstname=" + encodeURIComponent(firstname) +
+                  "&lastname=" + encodeURIComponent(lastname) +
+                  "&emailtranscript=" + encodeURIComponent(emailtranscript) +
+                  "&phone=" + encodeURIComponent(phone) +
+                  "&session_id=" + encodeURIComponent(sessionId) +
+                  "&email=" + encodeURIComponent(email)+
+                  "&queues=" + encodeURIComponent(queues)+
+                  "&skills=" + encodeURIComponent(skills);
+
+        window.location.href = url;
+    }
+</script>
+
+</body>
+</html>
