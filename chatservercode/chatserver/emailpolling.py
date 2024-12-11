@@ -214,6 +214,7 @@ agent_skills=os.getenv("API_AGENT_SKILLS")
 redis_host=os.getenv("REDIS_HOST")
 redis_port=os.getenv("REDIS_PORT")
 redis_db=os.getenv("REDIS_DB")
+queues=os.getenv("QUEUE")
 try:
     redis_client = redis.StrictRedis(redis_host,redis_port, db=redis_db, decode_responses=True)
     print("redis data base connected susscefully")
@@ -640,7 +641,7 @@ async def process_rejected_emails():
 
                 # Prepare message for agent assignment
                 message = {
-                    "queues": "technicalsupportqueue@1",
+                    "queues": queues,
                     "skills": "networking_skill",
                 }
 
@@ -668,20 +669,25 @@ async def process_rejected_emails():
                     if matched_agent:
                         agent_idl = matched_agent['agent_id']
                         print(f"Matched agent: {agent_idl}")
+                        print("agent_connections",agent_connections)
 
+                        # Get the agent's socket session ID
+                        agent_sid = agent_connections.get(agent_idl)
+
+                        if agent_sid:
                         # Emit the event for the new email
-                        await sio_Server.emit('new_email', {
-                            'sender': sender,
-                            'message_id': message_id,
-                            'recipient': recipient,
-                            'to_email': to_email,
-                            'cc_email': cc_email,
-                            'subject': subject,
-                            'date': date,
-                            'body': body,
-                            'session_id': rejected_session_id,
-                            "attachments": filtered_attaacthments(attachments)
-                        })
+                            await sio_Server.emit('new_email', {
+                                'sender': sender,
+                                'message_id': message_id,
+                                'recipient': recipient,
+                                'to_email': to_email,
+                                'cc_email': cc_email,
+                                'subject': subject,
+                                'date': date,
+                                'body': body,
+                                'session_id': rejected_session_id,
+                                "attachments": filtered_attaacthments(attachments)
+                            },to=agent_sid)
 
                         print(f"Assigned email with session_id {rejected_session_id} to agent {agent_idl}")
 
@@ -1718,6 +1724,32 @@ def clean_email_body(body):
     # Join the cleaned lines back into the final body
     cleaned_body = "\n".join(cleaned_lines)
     return cleaned_body
+##########################################################################################
+@sio_Server.event
+async def connect(sid, environ, auth):
+    print(f"New connection established. SID: {sid}")
+
+    @sio_Server.event
+    async def agent_id(sid, data):
+        agent_id = data
+        print(f"Received Agent-ID: {agent_id}")
+
+        # Map Agent-ID to Session ID
+        agent_connections[agent_id] = sid
+        print(f"Agent {agent_id} connected with session ID {sid}.")
+
+agent_connections = {}
+
+@sio_Server.event
+async def disconnect(sid):
+    agent_id = None
+    for key, value in agent_connections.items():
+        if value == sid:
+            agent_id = key
+            break
+    if agent_id:
+        del agent_connections[agent_id]
+        print(f"Agent {agent_id} disconnected.")
 
 ##### above is imp #######################################################################
 async def check_new_emails(mailbox):
@@ -1868,11 +1900,11 @@ async def check_new_emails(mailbox):
         #print("new attchments is Attachments:", attachments)
 
         # Further processing...
-        # message = {
-        #     "queues": "technicalsupportqueue@1",
-        #     "skills": "networking_skill",
-        # }
-        message = skills_match[0]
+        message = {
+            "queues": queues,
+            "skills": "networking_skill",
+        }
+        #message = skills_match[0]
 
         # Loop until an agent becomes available
         while True:
@@ -1882,21 +1914,27 @@ async def check_new_emails(mailbox):
             if agent:
                 agent_idl = agent['agent_id']
                 print("Matched agent:", agent_idl)
-                
-                await sio_Server.emit('new_email', {
-                    'sender': sender,
-                    'message_id': received_info,
-                    'recipient': recipient,
-                    'to_email': to_email,
-                    'cc_email': cc_email,
-                    'subject': subject,
-                    'date': date,
-                    'body': body,
-                    'session_id': global_session_id,
-                    "attachments": filtered_attaacthments(attachments)
-                })
-                print("Assigned email to agent:", agent_idl)
-                break  # Exit the loop after assigning the email
+                print("agent_connections",agent_connections)
+
+                # Get the agent's socket session ID
+                agent_sid = agent_connections.get(agent_idl)
+                if agent_sid:
+                    await sio_Server.emit('new_email', {
+                        'sender': sender,
+                        'message_id': received_info,
+                        'recipient': recipient,
+                        'to_email': to_email,
+                        'cc_email': cc_email,
+                        'subject': subject,
+                        'date': date,
+                        'body': body,
+                        'session_id': global_session_id,
+                        "attachments": filtered_attaacthments(attachments)
+                    },to=agent_sid)
+                    print("Assigned email to agent:", agent_idl)
+                    break  # Exit the loop after assigning the email
+                else:
+                    print(f"No active socket connection for agent {agent_idl}.")
             else:
                 print("No matched agent available. Retrying in 15 seconds...")
                 await asyncio.sleep(15)  # Wait for 15 seconds before retrying
