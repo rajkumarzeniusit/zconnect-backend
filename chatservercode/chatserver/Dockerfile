@@ -21,4 +21,4 @@ RUN pip install requests
 RUN pip install fastapi_socketio
 RUN pip3 install redis
 EXPOSE 8000
-CMD ["python3","emailpolling.py"]
+CMD ["uvicorn", "emailpolling:app", "--host", "0.0.0.0", "--port", "8000"]
