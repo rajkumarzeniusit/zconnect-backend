@@ -7,7 +7,6 @@ COPY serverconnection.py /opt/zconnect/
 COPY .env /opt/zconnect/
 COPY Dockerfile /opt/zconnect/
 RUN apt-get update && apt-get install -y curl
-
 # Download get-pip.py if not present
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     chmod +x get-pip.py && \
