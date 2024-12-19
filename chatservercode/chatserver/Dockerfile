@@ -13,6 +13,8 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py --force-reinstall
 RUN pip install asyncpg
 RUN pip install uvicorn
+RUN python3 -m pip install uvicorn
+RUN python -m uvicorn --version
 RUN pip install aiohttp
 RUN pip install python-dotenv
 RUN pip install fastapi
