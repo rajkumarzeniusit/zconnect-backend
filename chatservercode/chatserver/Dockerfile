@@ -23,5 +23,5 @@ RUN pip install psycopg2-binary
 RUN pip install requests
 RUN pip install fastapi_socketio
 RUN pip3 install redis
-expose 8000
+EXPOSE 8000
 CMD ["python", "emailpolling.py"]
